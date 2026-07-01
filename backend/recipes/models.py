@@ -1,5 +1,7 @@
-from django.db import models
+import uuid
+
 from django.core.validators import MinValueValidator
+from django.db import models
 
 from core.constants import (
     INGREDIENT_NAME_MAX_LENGTH,
@@ -92,11 +94,23 @@ class Recipe(TimeStampedModel):
         'Время приготовления',
         validators=(MinValueValidator(MIN_COOKING_TIME),),
     )
+    short_code = models.CharField(
+        'Короткий код',
+        max_length=10,
+        unique=True,
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         ordering = ('-created_at',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+
+    def save(self, *args, **kwargs):
+        if not self.short_code:
+            self.short_code = uuid.uuid4().hex[:8]
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name

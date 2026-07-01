@@ -38,6 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'django_filters',
+    'djoser',
     'core.apps.CoreConfig',
     'users.apps.UsersConfig',
     'recipes.apps.RecipesConfig',
@@ -140,5 +144,30 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'api.pagination.FoodgramPagination',
+    'PAGE_SIZE': 6,
+}
+
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'HIDE_USERS': False,
+    'SERIALIZERS': {
+        'user': 'api.serializers.UserSerializer',
+        'current_user': 'api.serializers.UserSerializer',
+        'user_create': 'api.serializers.UserCreateSerializer',
+    },
+    'PERMISSIONS': {
+        'user': ('rest_framework.permissions.AllowAny',),
+        'user_list': ('rest_framework.permissions.AllowAny',),
+    },
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

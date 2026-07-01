@@ -434,6 +434,29 @@ class FavoriteSerializer(serializers.ModelSerializer):
         ).data
 
 
+class SetPasswordSerializer(serializers.Serializer):
+    """Сериализатор для смены пароля."""
+
+    new_password = serializers.CharField(write_only=True)
+    current_password = serializers.CharField(write_only=True)
+
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError('Неверный текущий пароль.')
+        return value
+
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value
+
+    def save(self):
+        user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save(update_fields=('password',))
+        return user
+
+
 class ShoppingCartSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     recipe = serializers.PrimaryKeyRelatedField(queryset=Recipe.objects.all())
