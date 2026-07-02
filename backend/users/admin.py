@@ -24,4 +24,3 @@ class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'author', 'created_at')
     search_fields = ('user__email', 'user__username', 'author__username')
     list_filter = ('created_at',)
-

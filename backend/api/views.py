@@ -1,3 +1,5 @@
+import uuid
+
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -64,13 +66,11 @@ class UserViewSet(viewsets.ModelViewSet):
         context.update({'request': self.request})
         return context
 
-    @action(detail=False, methods=('get', 'put', 'delete'), url_path='me')
+    @action(detail=False, methods=('get',), url_path='me')
     def me(self, request):
         user = request.user
-        if request.method == 'GET':
-            serializer = UserSerializer(user, context={'request': request})
-            return Response(serializer.data)
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        serializer = UserSerializer(user, context={'request': request})
+        return Response(serializer.data)
 
     @action(
         detail=False,
@@ -207,6 +207,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
+    def get_permissions(self):
+        if self.action in ('favorite', 'shopping_cart',
+                           'download_shopping_cart'):
+            return (IsAuthenticated(),)
+        return super().get_permissions()
+
     def get_serializer_class(self):
         if self.request.method in ('GET',):
             return RecipeReadSerializer
@@ -229,10 +235,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = self.get_object()
         short_code = recipe.short_code
         if not short_code:
-            short_code = recipe.short_code
-            recipe.save()
+            short_code = uuid.uuid4().hex[:8]
+            recipe.short_code = short_code
+            recipe.save(update_fields=('short_code',))
         return Response(
-            {'link': f'/s/{short_code}/'},
+            {'short-link': f'/s/{short_code}/'},
             status=status.HTTP_200_OK,
         )
 

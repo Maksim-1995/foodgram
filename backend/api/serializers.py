@@ -187,10 +187,17 @@ class RecipeIngredientWriteSerializer(serializers.Serializer):
 
 
 class RecipeMinifiedSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
         read_only_fields = fields
+
+    def get_image(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
@@ -203,6 +210,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
@@ -219,6 +227,11 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'cooking_time',
         )
         read_only_fields = fields
+
+    def get_image(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
 
     def _user_has_relation(self, obj, related_name):
         request = self.context.get('request')
@@ -239,7 +252,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         many=True,
     )
     ingredients = RecipeIngredientWriteSerializer(many=True)
-    image = Base64ImageField(required=True)
+    image = Base64ImageField(required=False)
     name = serializers.CharField(max_length=RECIPE_NAME_MAX_LENGTH)
     cooking_time = serializers.IntegerField(min_value=MIN_COOKING_TIME)
 
@@ -318,22 +331,20 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        request = self.context.get('request')
-        recipe = Recipe.objects.create(
-            author=request.user,
-            **validated_data,
-        )
+        recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
         self._save_recipe_ingredients(recipe, ingredients)
         return recipe
 
     def update(self, instance, validated_data):
-        ingredients = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('ingredients', None)
+        tags = validated_data.pop('tags', None)
 
-        instance.tags.set(tags)
-        instance.recipe_ingredients.all().delete()
-        self._save_recipe_ingredients(instance, ingredients)
+        if tags is not None:
+            instance.tags.set(tags)
+        if ingredients is not None:
+            instance.recipe_ingredients.all().delete()
+            self._save_recipe_ingredients(instance, ingredients)
 
         return super().update(instance, validated_data)
 
