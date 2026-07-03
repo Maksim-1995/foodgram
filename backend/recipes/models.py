@@ -1,8 +1,5 @@
 import uuid
 
-from django.core.validators import MinValueValidator
-from django.db import models
-
 from core.constants import (
     INGREDIENT_NAME_MAX_LENGTH,
     MEASUREMENT_UNIT_MAX_LENGTH,
@@ -14,6 +11,8 @@ from core.constants import (
     TAG_SLUG_MAX_LENGTH,
 )
 from core.models import TimeStampedModel
+from django.core.validators import MinValueValidator
+from django.db import models
 from users.models import User
 
 

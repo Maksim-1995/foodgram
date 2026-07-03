@@ -1,5 +1,4 @@
 from django.urls import path
-
 from recipes.views import RecipeShortLinkRedirectView
 
 app_name = 'recipes'

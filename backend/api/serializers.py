@@ -2,12 +2,6 @@ import base64
 import binascii
 import uuid
 
-from django.contrib.auth.password_validation import validate_password
-from django.core.files.base import ContentFile
-from django.core.validators import RegexValidator
-from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
-
 from core.constants import (
     EMAIL_MAX_LENGTH,
     INGREDIENT_NAME_MAX_LENGTH,
@@ -20,6 +14,9 @@ from core.constants import (
     USER_NAME_MAX_LENGTH,
     USERNAME_MAX_LENGTH,
 )
+from django.contrib.auth.password_validation import validate_password
+from django.core.files.base import ContentFile
+from django.core.validators import RegexValidator
 from recipes.models import (
     Favorite,
     Ingredient,
@@ -28,6 +25,8 @@ from recipes.models import (
     ShoppingCart,
     Tag,
 )
+from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from users.models import Subscription, User
 
 

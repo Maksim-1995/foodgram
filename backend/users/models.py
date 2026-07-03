@@ -1,6 +1,3 @@
-from django.contrib.auth.models import AbstractUser
-from django.db import models
-
 from core.constants import (
     EMAIL_MAX_LENGTH,
     USER_AVATAR_UPLOAD_PATH,
@@ -8,6 +5,8 @@ from core.constants import (
     USERNAME_MAX_LENGTH,
 )
 from core.models import TimeStampedModel
+from django.contrib.auth.models import AbstractUser
+from django.db import models
 
 
 class User(AbstractUser):

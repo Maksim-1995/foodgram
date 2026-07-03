@@ -3,7 +3,6 @@ import uuid
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
-
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 
 User = get_user_model()
@@ -23,7 +22,7 @@ class Command(BaseCommand):
             ))
             return
 
-        # Маленькие реальные PNG-картинки (1x1 пиксель, но с правильной структурой)
+        # Маленькие реальные PNG-картинки (1x1 px, с правильной структурой)
         # Каждая будет уникальной благодаря разным именам файлов
         def make_image(name):
             return ContentFile(
@@ -192,11 +191,17 @@ class Command(BaseCommand):
 
         # Создаём рецепты для Ольги
         for recipe_data in olga_recipes:
-            _create_recipe(users['chef_olga'], recipe_data, tags, ingredients, make_image, self)
+            _create_recipe(
+                users['chef_olga'], recipe_data,
+                tags, ingredients, make_image, self,
+            )
 
         # Создаём рецепты для Дмитрия
         for recipe_data in dmitry_recipes:
-            _create_recipe(users['chef_dmitry'], recipe_data, tags, ingredients, make_image, self)
+            _create_recipe(
+                users['chef_dmitry'], recipe_data,
+                tags, ingredients, make_image, self,
+            )
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -206,8 +211,14 @@ class Command(BaseCommand):
         )
 
 
-def _create_recipe(author, recipe_data, tags, ingredients, make_image, self):
-    tag_objects = [tags[slug] for slug in recipe_data['tags_slugs'] if slug in tags]
+def _create_recipe(
+    author, recipe_data, tags, ingredients, make_image, self,
+):
+    tag_objects = [
+        tags[slug]
+        for slug in recipe_data['tags_slugs']
+        if slug in tags
+    ]
 
     recipe, created = Recipe.objects.get_or_create(
         name=recipe_data['name'],

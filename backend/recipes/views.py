@@ -1,6 +1,5 @@
 from django.shortcuts import get_object_or_404
 from django.views.generic.base import RedirectView
-
 from recipes.models import Recipe
 
 

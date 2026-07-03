@@ -1,14 +1,9 @@
 import base64
 import io
-import tempfile
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from PIL import Image
-from rest_framework import status
-from rest_framework.authtoken.models import Token
-from rest_framework.test import APIClient, APITestCase
-
 from recipes.models import (
     Favorite,
     Ingredient,
@@ -17,6 +12,9 @@ from recipes.models import (
     ShoppingCart,
     Tag,
 )
+from rest_framework import status
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient, APITestCase
 from users.models import Subscription, User
 
 
@@ -898,7 +896,10 @@ class RecipeAPITest(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('short-link', response.data)
-        self.assertIn(f'/s/{self.recipe.short_code}/', response.data['short-link'])
+        self.assertIn(
+            f'/s/{self.recipe.short_code}/',
+            response.data['short-link'],
+        )
 
     def test_filter_recipes_by_author(self):
         """Проверка фильтрации рецептов по автору."""
