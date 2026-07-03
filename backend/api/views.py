@@ -4,7 +4,7 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (
     AllowAny,
@@ -41,7 +41,12 @@ from recipes.models import (
 from users.models import Subscription, User
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
     """ViewSet для пользователей: регистрация, профиль, подписки, аватар."""
 
     queryset = User.objects.all()
@@ -239,7 +244,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe.short_code = short_code
             recipe.save(update_fields=('short_code',))
         return Response(
-            {'short-link': f'/s/{short_code}/'},
+            {'short-link': request.build_absolute_uri(f'/s/{short_code}/')},
             status=status.HTTP_200_OK,
         )
 
