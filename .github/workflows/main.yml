@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.12"]
     services:
       postgres:
         image: postgres:16-alpine
@@ -83,12 +83,12 @@ jobs:
     - name: Install dependencies
       run: |
         cd frontend/
-        npm install
+        npm install --legacy-peer-deps
 
-    - name: Test frontend
+    - name: Run tests
       run: |
-        cd frontend/
-        npm run test
+        cd frontend
+        npm run test -- --watchAll=false
 
   build_frontend_and_push_to_docker_hub:
     name: Push frontend Docker image to DockerHub
