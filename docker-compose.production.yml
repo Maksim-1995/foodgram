@@ -8,7 +8,7 @@ services:
     image: postgres:16-alpine
     env_file: .env
     volumes:
-      - pg_data_production:/var/lib/postgresql/data
+      - pg_data_production:/var/lib/postgresql/data/
     restart: always
 
   backend:
@@ -24,18 +24,19 @@ services:
   frontend:
     image: ${DOCKER_USERNAME}/foodgram_frontend:latest
     env_file: .env
-    command: cp -r /app/build/. /frontend_static/
-    volumes:
-      - static_volume:/frontend_static
+    expose:
+      - "8000"
+    restart: always
 
   gateway:
     image: ${DOCKER_USERNAME}/foodgram_gateway:latest
     env_file: .env
     volumes:
-      - static_volume:/var/html/static/
-      - media_volume:/var/html/media/
+      - static_volume:/usr/share/nginx/html/static/
+      - media_volume:/usr/share/nginx/html/media/
     ports:
-      - 8000:80
+      - 80:80
     depends_on:
       - backend
+      - frontend
     restart: always
