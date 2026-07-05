@@ -16,7 +16,7 @@ import { useEffect, useState, useContext } from "react";
 import api from "../../api";
 import { useParams, useHistory } from "react-router-dom";
 import { AuthContext, UserContext } from "../../contexts";
-import MetaTags from "react-meta-tags";
+import { Helmet } from "react-helmet-async";
 import DefaultImage from "../../images/userpic-icon.jpg";
 
 const UserPage = ({ updateOrders }) => {
@@ -83,7 +83,7 @@ const UserPage = ({ updateOrders }) => {
   return (
     <Main>
       <Container className={styles.container}>
-        <MetaTags>
+        <Helmet>
           <title>
             {user
               ? `${user.first_name} ${user.last_name}`
@@ -105,7 +105,7 @@ const UserPage = ({ updateOrders }) => {
                 : "Страница пользователя"
             }
           />
-        </MetaTags>
+        </Helmet>
         <div className={styles.title}>
           <div className={styles.titleTextBox}>
             <div className={styles.user}>

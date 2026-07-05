@@ -3,7 +3,7 @@ import styles from './styles.module.css'
 import { useRecipes } from '../../utils/index.js'
 import { useEffect, useState } from 'react'
 import api from '../../api'
-import MetaTags from 'react-meta-tags'
+import { Helmet } from 'react-helmet-async'
 
 const Cart = ({ updateOrders, orders }) => {
   const {
@@ -35,11 +35,11 @@ const Cart = ({ updateOrders, orders }) => {
 
   return <Main>
     <Container className={styles.container}>
-      <MetaTags>
+      <Helmet>
         <title>Список покупок</title>
         <meta name="description" content="Фудграм - Список покупок" />
         <meta property="og:title" content="Список покупок" />
-      </MetaTags>
+      </Helmet>
       <div className={styles.cart}>
         <Title title='Список покупок' />
         <PurchaseList

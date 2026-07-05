@@ -11,7 +11,7 @@ import { useFormWithValidation } from "../../utils";
 import { AuthContext } from "../../contexts";
 import { Redirect } from "react-router-dom";
 import { useContext } from "react";
-import MetaTags from "react-meta-tags";
+import { Helmet } from "react-helmet-async";
 
 const SignIn = ({ onSignIn, submitError, setSubmitError }) => {
   const { values, handleChange, errors } = useFormWithValidation();
@@ -26,14 +26,14 @@ const SignIn = ({ onSignIn, submitError, setSubmitError }) => {
     <Main withBG asFlex>
       {authContext && <Redirect to="/recipes" />}
       <Container className={styles.center}>
-        <MetaTags>
+        <Helmet>
           <title>Войти на сайт</title>
           <meta
             name="description"
             content="Фудграм - Войти на сайт"
           />
           <meta property="og:title" content="Войти на сайт" />
-        </MetaTags>
+        </Helmet>
         <Form
           className={styles.form}
           onSubmit={(e) => {

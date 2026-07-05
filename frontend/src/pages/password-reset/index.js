@@ -1,7 +1,7 @@
 import { Container, Input, Main, Form, Button, FormTitle } from '../../components'
 import styles from './styles.module.css'
 import { useFormWithValidation } from '../../utils'
-import MetaTags from 'react-meta-tags'
+import { Helmet } from 'react-helmet-async'
 import { AuthContext } from '../../contexts'
 import { useContext } from 'react'
 import { Redirect } from 'react-router-dom'
@@ -14,11 +14,11 @@ const ResetPassword = ({ onPasswordReset }) => {
 
   return <Main withBG asFlex>
     <Container className={styles.center}>
-      <MetaTags>
+      <Helmet>
         <title>Войти на сайт</title>
         <meta name="description" content="Фудграм - Сброс пароля" />
         <meta property="og:title" content="Сброс пароля" />
-      </MetaTags>
+      </Helmet>
       <Form
         className={styles.form}
         onSubmit={e => {

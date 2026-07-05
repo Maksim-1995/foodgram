@@ -2,7 +2,7 @@ import { Title, Pagination, Container, Main, SubscriptionList  } from '../../com
 import { useSubscriptions } from '../../utils'
 import api from '../../api'
 import { useEffect } from 'react'
-import MetaTags from 'react-meta-tags'
+import { Helmet } from 'react-helmet-async'
 
 const SubscriptionsPage = () => {
   const {
@@ -31,11 +31,11 @@ const SubscriptionsPage = () => {
 
   return <Main>
     <Container>
-      <MetaTags>
+      <Helmet>
         <title>Мои подписки</title>
         <meta name="description" content="Фудграм - Мои подписки" />
         <meta property="og:title" content="Мои подписки" />
-      </MetaTags>
+      </Helmet>
       <Title
         title='Мои подписки'
       />

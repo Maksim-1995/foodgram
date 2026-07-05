@@ -3,7 +3,7 @@ import styles from './styles.module.css'
 import { useRecipes } from '../../utils/index.js'
 import { useEffect } from 'react'
 import api from '../../api'
-import MetaTags from 'react-meta-tags'
+import { Helmet } from 'react-helmet-async'
 
 const HomePage = ({ updateOrders }) => {
   const {
@@ -44,11 +44,11 @@ const HomePage = ({ updateOrders }) => {
 
   return <Main>
     <Container>
-      <MetaTags>
+      <Helmet>
         <title>Рецепты</title>
         <meta name="description" content="Фудграм - Рецепты" />
         <meta property="og:title" content="Рецепты" />
-      </MetaTags>
+      </Helmet>
       <div className={styles.title}>
         <Title title='Рецепты' />
         <CheckboxGroup

@@ -15,7 +15,7 @@ import api from "../../api";
 import { useEffect, useState } from "react";
 import { useTags } from "../../utils";
 import { useParams, useHistory } from "react-router-dom";
-import MetaTags from "react-meta-tags";
+import { Helmet } from "react-helmet-async";
 import { Icons } from "../../components";
 import cn from "classnames";
 
@@ -149,11 +149,11 @@ const RecipeEdit = ({ onItemDelete }) => {
   return (
     <Main>
       <Container>
-        <MetaTags>
+        <Helmet>
           <title>Редактирование рецепта</title>
           <meta name="description" content="Фудграм - Редактирование рецепта" />
           <meta property="og:title" content="Редактирование рецепта" />
-        </MetaTags>
+        </Helmet>
         <Title title="Редактирование рецепта" />
         <Form
           className={styles.form}

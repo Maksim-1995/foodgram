@@ -3,7 +3,7 @@ import styles from './styles.module.css'
 import { useRecipes } from '../../utils/index.js'
 import { useEffect } from 'react'
 import api from '../../api'
-import MetaTags from 'react-meta-tags'
+import { Helmet } from 'react-helmet-async'
 
 const Favorites = ({ updateOrders }) => {
   const {
@@ -44,11 +44,11 @@ const Favorites = ({ updateOrders }) => {
 
   return <Main>
     <Container>
-      <MetaTags>
+      <Helmet>
         <title>Избранное</title>
         <meta name="description" content="Фудграм - Избранное" />
         <meta property="og:title" content="Избранное" />
-      </MetaTags>
+      </Helmet>
       <div className={styles.title}>
         <Title title='Избранное' />
         <CheckboxGroup
