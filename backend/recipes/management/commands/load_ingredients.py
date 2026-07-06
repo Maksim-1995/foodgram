@@ -11,7 +11,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         json_path = os.path.join(
-            settings.BASE_DIR.parent,
+            settings.BASE_DIR,
             'data',
             'ingredients.json',
         )

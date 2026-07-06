@@ -13,6 +13,7 @@ services:
 
   backend:
     image: ${DOCKER_USERNAME}/foodgram_backend:latest
+    entrypoint: ./entrypoint.sh
     env_file: .env
     volumes:
       - static_volume:/app/static/
