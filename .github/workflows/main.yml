@@ -169,6 +169,16 @@ jobs:
           target: "foodgram"
           strip_components: 0
 
+      - name: Copy nginx config and docs via scp
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "nginx/nginx.conf,docs"
+          target: "."
+          strip_components: 0
+
       - name: Executing remote ssh commands to deploy
         uses: appleboy/ssh-action@master
         with:
