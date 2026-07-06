@@ -4,7 +4,7 @@ set -e
 
 # Ожидание готовности PostgreSQL
 echo "Ожидание готовности базы данных..."
-while ! python -c "import psycopg2; psycopg2.connect(
+while ! python3 -c "import psycopg2; psycopg2.connect(
     host='${DB_HOST:-db}',
     port='${DB_PORT:-5432}',
     dbname='${POSTGRES_DB}',
@@ -17,15 +17,15 @@ done
 echo "База данных готова!"
 
 # Применяем миграции
-python manage.py migrate --noinput
+python3 manage.py migrate --noinput
 
 # Собираем статику Django (без --clear, чтобы не удалять файлы фронтенда)
-python manage.py collectstatic --noinput
+python3 manage.py collectstatic --noinput
 
 # Загружаем теги (если их нет)
-python manage.py load_tags
+python3 manage.py load_tags || echo "Предупреждение: load_tags завершился с ошибкой"
 
 # Загружаем ингредиенты (если их нет)
-python manage.py load_ingredients
+python3 manage.py load_ingredients || echo "Предупреждение: load_ingredients завершился с ошибкой"
 
 exec "$@"
