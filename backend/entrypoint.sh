@@ -28,4 +28,7 @@ python3 manage.py load_tags || echo "Предупреждение: load_tags з�
 # Загружаем ингредиенты (если их нет)
 python3 manage.py load_ingredients || echo "Предупреждение: load_ingredients завершился с ошибкой"
 
+# Загружаем тестовые данные: 7 пользователей с рецептами и картинками
+python3 manage.py load_test_data || echo "Предупреждение: load_test_data завершился с ошибкой"
+
 exec "$@"

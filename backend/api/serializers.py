@@ -54,9 +54,15 @@ class Base64ImageField(serializers.ImageField):
 
         return super().to_internal_value(data)
 
+    def to_representation(self, value):
+        if not value:
+            return None
+        return value.url
+
 
 class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -70,6 +76,11 @@ class UserSerializer(serializers.ModelSerializer):
             'avatar',
         )
         read_only_fields = fields
+
+    def get_avatar(self, obj):
+        if obj.avatar:
+            return f'/media/{obj.avatar.name}'
+        return None
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
