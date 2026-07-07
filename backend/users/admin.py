@@ -5,6 +5,8 @@ from users.models import Subscription, User
 
 @admin.register(User)
 class FoodgramUserAdmin(UserAdmin):
+    """Админ-панель для управления пользователями."""
+
     list_display = (
         'id',
         'email',
@@ -20,6 +22,8 @@ class FoodgramUserAdmin(UserAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
+    """Админ-панель для управления подписками."""
+
     list_display = ('id', 'user', 'author', 'created_at')
     search_fields = ('user__email', 'user__username', 'author__username')
     list_filter = ('created_at',)

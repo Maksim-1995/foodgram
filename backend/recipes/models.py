@@ -17,6 +17,8 @@ from users.models import User
 
 
 class Tag(models.Model):
+    """Модель тега для маркировки рецептов."""
+
     name = models.CharField(
         'Название',
         max_length=TAG_NAME_MAX_LENGTH,
@@ -38,6 +40,8 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
+    """Модель ингредиента с названием и единицей измерения."""
+
     name = models.CharField(
         'Название',
         max_length=INGREDIENT_NAME_MAX_LENGTH,
@@ -63,6 +67,8 @@ class Ingredient(models.Model):
 
 
 class Recipe(TimeStampedModel):
+    """Модель рецепта с автором, ингредиентами, тегами и изображением."""
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -107,6 +113,7 @@ class Recipe(TimeStampedModel):
         verbose_name_plural = 'Рецепты'
 
     def save(self, *args, **kwargs):
+        """Генерирует короткий код при создании рецепта, если его нет."""
         if not self.short_code:
             self.short_code = uuid.uuid4().hex[:8]
         super().save(*args, **kwargs)
@@ -116,6 +123,8 @@ class Recipe(TimeStampedModel):
 
 
 class RecipeIngredient(models.Model):
+    """Промежуточная модель для связи рецепта с ингредиентом."""
+
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -151,6 +160,8 @@ class RecipeIngredient(models.Model):
 
 
 class UserRecipeRelation(TimeStampedModel):
+    """Абстрактная модель для связи пользователя с рецептом."""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -171,6 +182,8 @@ class UserRecipeRelation(TimeStampedModel):
 
 
 class Favorite(UserRecipeRelation):
+    """Модель избранного рецепта пользователя."""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -196,6 +209,8 @@ class Favorite(UserRecipeRelation):
 
 
 class ShoppingCart(UserRecipeRelation):
+    """Модель рецепта в списке покупок пользователя."""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

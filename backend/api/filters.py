@@ -26,11 +26,13 @@ class RecipeFilter(django_filters.FilterSet):
         fields = ('tags', 'author', 'is_favorited', 'is_in_shopping_cart')
 
     def filter_is_favorited(self, queryset, name, value):
+        """Фильтрует рецепты по наличию в избранном у текущего пользователя."""
         if value == 1 and self.request.user.is_authenticated:
             return queryset.filter(favorites__user=self.request.user)
         return queryset
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
+        """Фильтрует рецепты по наличию в списке покупок."""
         if value == 1 and self.request.user.is_authenticated:
             return queryset.filter(shopping_carts__user=self.request.user)
         return queryset
@@ -48,6 +50,7 @@ class IngredientFilter(django_filters.FilterSet):
         fields = ('name',)
 
     def filter_name(self, queryset, name, value):
+        """Фильтрует ингредиенты по началу названия (регистронезависимо)."""
         if not value:
             return queryset
         return queryset.filter(name__istartswith=value)

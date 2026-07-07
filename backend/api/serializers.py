@@ -34,6 +34,7 @@ class Base64ImageField(serializers.ImageField):
     """Поле для base64-картинок от фронтенда."""
 
     def to_internal_value(self, data):
+        """Преобразует base64-строку в файл изображения."""
         if isinstance(data, str):
             file_format = 'jpg'
 
@@ -55,6 +56,7 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
     def to_representation(self, value):
+        """Возвращает URL изображения."""
         if not value:
             return None
         return value.url
@@ -78,11 +80,13 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_avatar(self, obj):
+        """Возвращает URL аватара пользователя."""
         if obj.avatar:
             return f'/media/{obj.avatar.name}'
         return None
 
     def get_is_subscribed(self, obj):
+        """Проверяет, подписан ли текущий пользователь на автора."""
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
             return False
@@ -126,6 +130,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
     def validate_username(self, value):
+        """Проверяет, что username не равен 'me'."""
         if value.lower() == 'me':
             raise serializers.ValidationError(
                 'Имя "me" запрещено.'
@@ -133,10 +138,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_password(self, value):
+        """Проверяет пароль на соответствие требованиям Django."""
         validate_password(value)
         return value
 
     def create(self, validated_data):
+        """Создаёт пользователя с зашифрованным паролем."""
         user = User(
             email=validated_data['email'],
             username=validated_data['username'],
@@ -205,6 +212,7 @@ class RecipeMinifiedSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_image(self, obj):
+        """Возвращает URL изображения рецепта."""
         if obj.image:
             return obj.image.url
         return None
@@ -244,15 +252,18 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         return None
 
     def _user_has_relation(self, obj, related_name):
+        """Проверяет наличие связи пользователя с рецептом."""
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
             return False
         return getattr(obj, related_name).filter(user=request.user).exists()
 
     def get_is_favorited(self, obj):
+        """Проверяет, находится ли рецепт в избранном у пользователя."""
         return self._user_has_relation(obj, 'favorites')
 
     def get_is_in_shopping_cart(self, obj):
+        """Проверяет, находится ли рецепт в списке покупок у пользователя."""
         return self._user_has_relation(obj, 'shopping_carts')
 
 
@@ -278,6 +289,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         )
 
     def validate_tags(self, tags):
+        """Проверяет, что теги не пустые и не повторяются."""
         if not tags:
             raise serializers.ValidationError(
                 'Нужно выбрать хотя бы один тег.'
@@ -292,6 +304,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return tags
 
     def validate_ingredients(self, ingredients):
+        """Проверяет, что ингредиенты не пустые и не повторяются."""
         if not ingredients:
             raise serializers.ValidationError(
                 'Нужно добавить хотя бы один '
@@ -308,6 +321,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return ingredients
 
     def validate(self, attrs):
+        """Проверяет наличие обязательных полей при обновлении рецепта."""
         if self.instance is None:
             return attrs
 
@@ -329,6 +343,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return attrs
 
     def _save_recipe_ingredients(self, recipe, ingredients):
+        """Создаёт связи рецепта с ингредиентами."""
         RecipeIngredient.objects.bulk_create(
             RecipeIngredient(
                 recipe=recipe,
@@ -339,6 +354,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
+        """Создаёт рецепт с тегами и ингредиентами."""
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
@@ -347,6 +363,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
+        """Обновляет рецепт, перезаписывая теги и ингредиенты."""
         ingredients = validated_data.pop('ingredients', None)
         tags = validated_data.pop('tags', None)
 
@@ -359,6 +376,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
+        """Возвращает полное представление рецепта после записи."""
         return RecipeReadSerializer(instance, context=self.context).data
 
 
@@ -371,6 +389,7 @@ class UserWithRecipesSerializer(UserSerializer):
         read_only_fields = fields
 
     def get_recipes(self, obj):
+        """Возвращает рецепты пользователя с учётом параметра recipes_limit."""
         request = self.context.get('request')
         recipes = obj.recipes.all()
         recipes_limit = None
@@ -394,6 +413,7 @@ class UserWithRecipesSerializer(UserSerializer):
         ).data
 
     def get_recipes_count(self, obj):
+        """Возвращает количество рецептов пользователя."""
         return obj.recipes.count()
 
 
@@ -406,6 +426,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = ('user', 'author')
 
     def validate(self, attrs):
+        """Проверяет, что подписка возможна (не на себя, не повторная)."""
         user = attrs['user']
         author = attrs['author']
 
@@ -424,6 +445,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         return attrs
 
     def to_representation(self, instance):
+        """Возвращает данные автора с рецептами после подписки."""
         return UserWithRecipesSerializer(
             instance.author,
             context=self.context,
@@ -439,6 +461,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
         fields = ('user', 'recipe')
 
     def validate(self, attrs):
+        """Проверяет, что рецепт ещё не в избранном."""
         if Favorite.objects.filter(
             user=attrs['user'],
             recipe=attrs['recipe'],
@@ -449,6 +472,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
         return attrs
 
     def to_representation(self, instance):
+        """Возвращает упрощённые данные рецепта после добавления."""
         return RecipeMinifiedSerializer(
             instance.recipe,
             context=self.context,
@@ -462,16 +486,19 @@ class SetPasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(write_only=True)
 
     def validate_current_password(self, value):
+        """Проверяет, что текущий пароль введён верно."""
         user = self.context['request'].user
         if not user.check_password(value):
             raise serializers.ValidationError('Неверный текущий пароль.')
         return value
 
     def validate_new_password(self, value):
+        """Проверяет новый пароль на соответствие требованиям Django."""
         validate_password(value)
         return value
 
     def save(self):
+        """Сохраняет новый пароль пользователя."""
         user = self.context['request'].user
         user.set_password(self.validated_data['new_password'])
         user.save(update_fields=('password',))
@@ -487,6 +514,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
         fields = ('user', 'recipe')
 
     def validate(self, attrs):
+        """Проверяет, что рецепт ещё не в списке покупок."""
         if ShoppingCart.objects.filter(
             user=attrs['user'],
             recipe=attrs['recipe'],
@@ -498,6 +526,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
         return attrs
 
     def to_representation(self, instance):
+        """Возвращает упрощённые данные рецепта после добавления."""
         return RecipeMinifiedSerializer(
             instance.recipe,
             context=self.context,

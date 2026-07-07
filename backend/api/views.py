@@ -53,11 +53,13 @@ class UserViewSet(
     permission_classes = (AllowAny,)
 
     def get_serializer_class(self):
+        """Возвращает сериализатор в зависимости от действия."""
         if self.action == 'create':
             return UserCreateSerializer
         return UserSerializer
 
     def get_permissions(self):
+        """Возвращает permission classes в зависимости от действия."""
         if self.action in ('me', 'subscriptions', 'subscribe',
                            'avatar', 'set_password'):
             return (IsAuthenticated(),)
@@ -66,12 +68,14 @@ class UserViewSet(
         return (AllowAny(),)
 
     def get_serializer_context(self):
+        """Добавляет request в контекст сериализатора."""
         context = super().get_serializer_context()
         context.update({'request': self.request})
         return context
 
     @action(detail=False, methods=('get',), url_path='me')
     def me(self, request):
+        """Возвращает профиль текущего пользователя."""
         user = request.user
         serializer = UserSerializer(user, context={'request': request})
         return Response(serializer.data)
@@ -82,6 +86,7 @@ class UserViewSet(
         url_path='me/avatar',
     )
     def avatar(self, request):
+        """Загружает или удаляет аватар текущего пользователя."""
         user = request.user
         if request.method == 'PUT':
             serializer = AvatarSerializer(
@@ -106,6 +111,7 @@ class UserViewSet(
         url_path='set_password',
     )
     def set_password(self, request):
+        """Меняет пароль текущего пользователя."""
         serializer = SetPasswordSerializer(
             data=request.data,
             context={'request': request},
@@ -120,6 +126,7 @@ class UserViewSet(
         url_path='subscriptions',
     )
     def subscriptions(self, request):
+        """Возвращает список подписок текущего пользователя."""
         user = request.user
         queryset = User.objects.filter(subscribers__user=user)
         page = self.paginate_queryset(queryset)
@@ -143,6 +150,7 @@ class UserViewSet(
         url_path='subscribe',
     )
     def subscribe(self, request, pk=None):
+        """Подписывает или отписывает текущего пользователя от автора."""
         author = get_object_or_404(User, pk=pk)
         user = request.user
 
@@ -212,22 +220,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
 
     def get_permissions(self):
+        """Возвращает permission classes для actions рецептов."""
         if self.action in ('favorite', 'shopping_cart',
                            'download_shopping_cart'):
             return (IsAuthenticated(),)
         return super().get_permissions()
 
     def get_serializer_class(self):
+        """Возвращает сериализатор: для чтения или для записи."""
         if self.request.method in ('GET',):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
     def get_serializer_context(self):
+        """Добавляет request в контекст сериализатора."""
         context = super().get_serializer_context()
         context.update({'request': self.request})
         return context
 
     def perform_create(self, serializer):
+        """Устанавливает автором рецепта текущего пользователя."""
         serializer.save(author=self.request.user)
 
     @action(
@@ -236,6 +248,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='get-link',
     )
     def get_link(self, request, pk=None):
+        """Генерирует или возвращает короткую ссылку на рецепт."""
         recipe = self.get_object()
         short_code = recipe.short_code
         if not short_code:
@@ -253,6 +266,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='favorite',
     )
     def favorite(self, request, pk=None):
+        """Добавляет или удаляет рецепт из избранного."""
         recipe = self.get_object()
         user = request.user
 
@@ -286,6 +300,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='shopping_cart',
     )
     def shopping_cart(self, request, pk=None):
+        """Добавляет или удаляет рецепт из списка покупок."""
         recipe = self.get_object()
         user = request.user
 
@@ -322,6 +337,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='download_shopping_cart',
     )
     def download_shopping_cart(self, request):
+        """Скачивает файл со списком покупок в формате .txt."""
         user = request.user
         ingredients = (
             RecipeIngredient.objects

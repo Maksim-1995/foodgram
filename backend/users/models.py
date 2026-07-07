@@ -10,6 +10,8 @@ from django.db import models
 
 
 class User(AbstractUser):
+    """Кастомная модель пользователя с аутентификацией по email."""
+
     email = models.EmailField(
         'Адрес электронной почты',
         max_length=EMAIL_MAX_LENGTH,
@@ -48,6 +50,8 @@ class User(AbstractUser):
 
 
 class Subscription(TimeStampedModel):
+    """Модель подписки пользователя на автора."""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

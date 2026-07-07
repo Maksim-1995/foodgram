@@ -1,6 +1,7 @@
 frontend/node_modules
 infra/frontend/build
 .env
+.env.production
 infra/.env
 
 # Byte-compiled / optimized / DLL files
