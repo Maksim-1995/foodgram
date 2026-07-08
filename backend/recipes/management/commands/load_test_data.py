@@ -400,7 +400,9 @@ class Command(BaseCommand):
         ]
         chef_olga_user = users.get('chef_olga')
         if chef_olga_user is None:
-            self.stdout.write(self.style.ERROR('Пользователь chef_olga не найден'))
+            self.stdout.write(
+                self.style.ERROR('Пользователь chef_olga не найден')
+            )
         else:
             for recipe_index, recipe_data in enumerate(olga_recipes):
                 _create_recipe(
@@ -464,7 +466,9 @@ class Command(BaseCommand):
         ]
         chef_dmitry_user = users.get('chef_dmitry')
         if chef_dmitry_user is None:
-            self.stdout.write(self.style.ERROR('Пользователь chef_dmitry не найден'))
+            self.stdout.write(
+                self.style.ERROR('Пользователь chef_dmitry не найден')
+            )
         else:
             for recipe_index, recipe_data in enumerate(dmitry_recipes):
                 _create_recipe(
@@ -511,7 +515,9 @@ class Command(BaseCommand):
         ]
         elena_user = users.get('elena_cook')
         if elena_user is None:
-            self.stdout.write(self.style.ERROR('Пользователь elena_cook не найден'))
+            self.stdout.write(
+                self.style.ERROR('Пользователь elena_cook не найден')
+            )
         else:
             for recipe_index, recipe_data in enumerate(elena_recipes):
                 _create_recipe(
