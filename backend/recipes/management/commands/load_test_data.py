@@ -1,4 +1,4 @@
-import uuid
+import secrets
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
@@ -36,7 +36,7 @@ def _create_recipe(
             'text': recipe_data['text'],
             'cooking_time': recipe_data['cooking_time'],
             'image': make_image(image_name),
-            'short_code': uuid.uuid4().hex[:8],
+            'short_code': secrets.token_hex(4),
         },
     )
 
@@ -215,9 +215,10 @@ class Command(BaseCommand):
                 )
             users[user.username] = user
 
+        users_count = len(users)
         self.stdout.write(
             self.style.SUCCESS(
-                f'Создано/обновлено пользователей: {len(users)}'
+                f'Создано/обновлено пользователей: {users_count}'
             )
         )
 
@@ -258,74 +259,90 @@ class Command(BaseCommand):
                 ],
             },
         ]
-        for i, r_data in enumerate(admin_recipes):
-            _create_recipe(
-                users['admin'], r_data,
-                tags, ingredients,
-                f'admin_recipe_{i}.png', self,
-            )
+        admin_user = users.get('admin')
+        if admin_user is None:
+            self.stdout.write(self.style.ERROR('Пользователь admin не найден'))
+        else:
+            for recipe_index, recipe_data in enumerate(admin_recipes):
+                _create_recipe(
+                    admin_user, recipe_data,
+                    tags, ingredients,
+                    f'admin_recipe_{recipe_index}.png', self,
+                )
 
         # Рецепт для user1 (Иван)
-        _create_recipe(
-            users['user1'],
-            {
-                'name': 'Картофельное пюре',
-                'text': (
-                    'Классическое картофельное пюре — '
-                    'отличный гарнир к любому блюду.'
-                ),
-                'cooking_time': 30,
-                'tags_slugs': ['lunch', 'dinner'],
-                'ingredients_data': [
-                    ('Картофель', 500),
-                    ('Молоко', 150),
-                    ('Соль', 1),
-                    ('Масло растительное', 2),
-                ],
-            },
-            tags, ingredients, 'user1_potato.png', self,
-        )
+        user1_obj = users.get('user1')
+        if user1_obj is not None:
+            _create_recipe(
+                user1_obj,
+                {
+                    'name': 'Картофельное пюре',
+                    'text': (
+                        'Классическое картофельное пюре — '
+                        'отличный гарнир к любому блюду.'
+                    ),
+                    'cooking_time': 30,
+                    'tags_slugs': ['lunch', 'dinner'],
+                    'ingredients_data': [
+                        ('Картофель', 500),
+                        ('Молоко', 150),
+                        ('Соль', 1),
+                        ('Масло растительное', 2),
+                    ],
+                },
+                tags, ingredients, 'user1_potato.png', self,
+            )
+        else:
+            self.stdout.write(self.style.ERROR('Пользователь user1 не найден'))
 
         # Рецепт для user2 (Мария)
-        _create_recipe(
-            users['user2'],
-            {
-                'name': 'Яичница с овощами',
-                'text': (
-                    'Простой и быстрый завтрак из яиц с овощами.'
-                ),
-                'cooking_time': 15,
-                'tags_slugs': ['breakfast'],
-                'ingredients_data': [
-                    ('Яйцо куриное', 3),
-                    ('Лук репчатый', 50),
-                    ('Масло растительное', 1),
-                    ('Соль', 1),
-                ],
-            },
-            tags, ingredients, 'user2_eggs.png', self,
-        )
+        user2_obj = users.get('user2')
+        if user2_obj is not None:
+            _create_recipe(
+                user2_obj,
+                {
+                    'name': 'Яичница с овощами',
+                    'text': (
+                        'Простой и быстрый завтрак из яиц с овощами.'
+                    ),
+                    'cooking_time': 15,
+                    'tags_slugs': ['breakfast'],
+                    'ingredients_data': [
+                        ('Яйцо куриное', 3),
+                        ('Лук репчатый', 50),
+                        ('Масло растительное', 1),
+                        ('Соль', 1),
+                    ],
+                },
+                tags, ingredients, 'user2_eggs.png', self,
+            )
+        else:
+            self.stdout.write(self.style.ERROR('Пользователь user2 не найден'))
 
         # Рецепт для user3 (Алексей)
-        _create_recipe(
-            users['user3'],
-            {
-                'name': 'Суп картофельный',
-                'text': (
-                    'Сытный картофельный суп — идеальный обед.'
-                ),
-                'cooking_time': 45,
-                'tags_slugs': ['lunch'],
-                'ingredients_data': [
-                    ('Картофель', 300),
-                    ('Морковь', 100),
-                    ('Лук репчатый', 80),
-                    ('Чеснок', 2),
-                    ('Соль', 1),
-                ],
-            },
-            tags, ingredients, 'user3_soup.png', self,
-        )
+        user3_obj = users.get('user3')
+        if user3_obj is not None:
+            _create_recipe(
+                user3_obj,
+                {
+                    'name': 'Суп картофельный',
+                    'text': (
+                        'Сытный картофельный суп — идеальный обед.'
+                    ),
+                    'cooking_time': 45,
+                    'tags_slugs': ['lunch'],
+                    'ingredients_data': [
+                        ('Картофель', 300),
+                        ('Морковь', 100),
+                        ('Лук репчатый', 80),
+                        ('Чеснок', 2),
+                        ('Соль', 1),
+                    ],
+                },
+                tags, ingredients, 'user3_soup.png', self,
+            )
+        else:
+            self.stdout.write(self.style.ERROR('Пользователь user3 не найден'))
 
         # Рецепты для chef_olga (3 рецепта)
         olga_recipes = [
@@ -381,12 +398,16 @@ class Command(BaseCommand):
                 ],
             },
         ]
-        for i, r_data in enumerate(olga_recipes):
-            _create_recipe(
-                users['chef_olga'], r_data,
-                tags, ingredients,
-                f'olga_recipe_{i}.png', self,
-            )
+        chef_olga_user = users.get('chef_olga')
+        if chef_olga_user is None:
+            self.stdout.write(self.style.ERROR('Пользователь chef_olga не найден'))
+        else:
+            for recipe_index, recipe_data in enumerate(olga_recipes):
+                _create_recipe(
+                    chef_olga_user, recipe_data,
+                    tags, ingredients,
+                    f'olga_recipe_{recipe_index}.png', self,
+                )
 
         # Рецепты для chef_dmitry (3 рецепта)
         dmitry_recipes = [
@@ -441,12 +462,16 @@ class Command(BaseCommand):
                 ],
             },
         ]
-        for i, r_data in enumerate(dmitry_recipes):
-            _create_recipe(
-                users['chef_dmitry'], r_data,
-                tags, ingredients,
-                f'dmitry_recipe_{i}.png', self,
-            )
+        chef_dmitry_user = users.get('chef_dmitry')
+        if chef_dmitry_user is None:
+            self.stdout.write(self.style.ERROR('Пользователь chef_dmitry не найден'))
+        else:
+            for recipe_index, recipe_data in enumerate(dmitry_recipes):
+                _create_recipe(
+                    chef_dmitry_user, recipe_data,
+                    tags, ingredients,
+                    f'dmitry_recipe_{recipe_index}.png', self,
+                )
 
         # Рецепты для elena_cook (2 рецепта)
         elena_recipes = [
@@ -484,19 +509,23 @@ class Command(BaseCommand):
                 ],
             },
         ]
-        for i, r_data in enumerate(elena_recipes):
-            _create_recipe(
-                users['elena_cook'], r_data,
-                tags, ingredients,
-                f'elena_recipe_{i}.png', self,
-            )
+        elena_user = users.get('elena_cook')
+        if elena_user is None:
+            self.stdout.write(self.style.ERROR('Пользователь elena_cook не найден'))
+        else:
+            for recipe_index, recipe_data in enumerate(elena_recipes):
+                _create_recipe(
+                    elena_user, recipe_data,
+                    tags, ingredients,
+                    f'elena_recipe_{recipe_index}.png', self,
+                )
 
         # Итог
         total_recipes = Recipe.objects.count()
         self.stdout.write(
             self.style.SUCCESS(
                 '═══ ЗАГРУЗКА ТЕСТОВЫХ ДАННЫХ ЗАВЕРШЕНА ═══\n'
-                f'Пользователей: {len(users)}\n'
+                f'Пользователей: {users_count}\n'
                 f'Рецептов в БД: {total_recipes}\n'
                 'Пароль для admin: admin123\n'
                 'Пароль для user1/user2/user3: user12345\n'

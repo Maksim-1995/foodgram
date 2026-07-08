@@ -1,4 +1,4 @@
-import uuid
+import secrets
 
 from core.constants import (
     INGREDIENT_NAME_MAX_LENGTH,
@@ -104,7 +104,6 @@ class Recipe(TimeStampedModel):
         max_length=10,
         unique=True,
         blank=True,
-        null=True,
     )
 
     class Meta:
@@ -115,7 +114,7 @@ class Recipe(TimeStampedModel):
     def save(self, *args, **kwargs):
         """Генерирует короткий код при создании рецепта, если его нет."""
         if not self.short_code:
-            self.short_code = uuid.uuid4().hex[:8]
+            self.short_code = secrets.token_hex(4)
         super().save(*args, **kwargs)
 
     def __str__(self):

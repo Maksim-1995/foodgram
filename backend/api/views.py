@@ -1,4 +1,4 @@
-import uuid
+import secrets
 
 from api.filters import IngredientFilter, RecipeFilter
 from api.pagination import FoodgramPagination
@@ -252,7 +252,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = self.get_object()
         short_code = recipe.short_code
         if not short_code:
-            short_code = uuid.uuid4().hex[:8]
+            short_code = secrets.token_hex(4)
             recipe.short_code = short_code
             recipe.save(update_fields=('short_code',))
         return Response(
