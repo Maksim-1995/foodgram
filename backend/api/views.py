@@ -3,7 +3,17 @@ from django.db.models import Exists, F, OuterRef, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
+from rest_framework.response import Response
 
 from api.filters import IngredientFilter, RecipeFilter
 from api.pagination import FoodgramPagination
@@ -30,16 +40,6 @@ from recipes.models import (
     ShoppingCart,
     Tag,
 )
-from rest_framework import mixins, status, viewsets
-from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import (
-    AllowAny,
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
-from rest_framework.response import Response
-from users.models import Subscription
 
 User = get_user_model()
 
@@ -86,7 +86,10 @@ class UserViewSet(
     def me(self, request):
         """Возвращает профиль текущего пользователя."""
         user = request.user
-        serializer = UserSerializer(user, context=self.get_serializer_context())
+        serializer = UserSerializer(
+            user,
+            context=self.get_serializer_context(),
+        )
         return Response(serializer.data)
 
     @action(
@@ -379,3 +382,4 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'attachment; filename="shopping_list.txt"'
         )
         return response
+
