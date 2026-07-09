@@ -14,6 +14,7 @@ from core.constants import (
     USER_NAME_MAX_LENGTH,
     USERNAME_MAX_LENGTH,
 )
+from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
@@ -27,7 +28,9 @@ from recipes.models import (
 )
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from users.models import Subscription, User
+from users.models import Subscription
+
+User = get_user_model()
 
 
 class Base64ImageField(serializers.ImageField):

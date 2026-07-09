@@ -11,9 +11,9 @@ from core.constants import (
     TAG_SLUG_MAX_LENGTH,
 )
 from core.models import TimeStampedModel
+from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
-from users.models import User
 
 
 class Tag(models.Model):
@@ -70,7 +70,7 @@ class Recipe(TimeStampedModel):
     """Модель рецепта с автором, ингредиентами, тегами и изображением."""
 
     author = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='recipes',
         verbose_name='Автор',
@@ -162,7 +162,7 @@ class UserRecipeRelation(TimeStampedModel):
     """Абстрактная модель для связи пользователя с рецептом."""
 
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
     )
@@ -184,7 +184,7 @@ class Favorite(UserRecipeRelation):
     """Модель избранного рецепта пользователя."""
 
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='favorites',
         verbose_name='Пользователь',
@@ -211,7 +211,7 @@ class ShoppingCart(UserRecipeRelation):
     """Модель рецепта в списке покупок пользователя."""
 
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='shopping_cart',
         verbose_name='Пользователь',

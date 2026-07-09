@@ -1,11 +1,11 @@
 from django.core.management.base import BaseCommand
 from recipes.models import Tag
 
-TAGS = [
+TAGS = (
     {'name': 'Завтрак', 'slug': 'breakfast'},
     {'name': 'Обед', 'slug': 'lunch'},
     {'name': 'Ужин', 'slug': 'dinner'},
-]
+)
 
 
 class Command(BaseCommand):
