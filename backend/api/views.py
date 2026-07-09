@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Sum, F
+from django.db.models import Exists, F, OuterRef, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -74,9 +74,7 @@ class UserViewSet(
                            'unsubscribe', 'upload_avatar',
                            'delete_avatar', 'set_password'}:
             return (IsAuthenticated(),)
-        if self.action == 'create':
-            return (AllowAny(),)
-        return (AllowAny(),)
+        return super().get_permissions()
 
     def get_serializer_context(self):
         """Добавляет request в контекст сериализатора."""
@@ -108,11 +106,7 @@ class UserViewSet(
         serializer.save()
         return Response(serializer.data)
 
-    @action(
-        detail=False,
-        methods=('delete',),
-        url_path='me/avatar',
-    )
+    @upload_avatar.mapping.delete
     def delete_avatar(self, request):
         """Удаляет аватар текущего пользователя."""
         user = request.user
@@ -179,18 +173,13 @@ class UserViewSet(
             status=status.HTTP_201_CREATED,
         )
 
-    @action(
-        detail=True,
-        methods=('delete',),
-        url_path='subscribe',
-    )
+    @subscribe.mapping.delete
     def unsubscribe(self, request, pk=None):
         """Отписывает текущего пользователя от автора."""
         author = get_object_or_404(User, pk=pk)
         user = request.user
 
-        deleted_count, _ = Subscription.objects.filter(
-            user=user,
+        deleted_count, _ = user.subscriptions.filter(
             author=author,
         ).delete()
         if deleted_count == 0:
@@ -228,10 +217,43 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
+    def get_queryset(self):
+        """Аннотирует рецепты полями is_favorited и is_in_shopping_cart.
+
+        Вместо N+1 запросов (по одному на каждый рецепт для каждого поля)
+        делает всего 2 подзапроса через Exists, что даёт огромный
+        прирост производительности на списках рецептов.
+        """
+        queryset = super().get_queryset()
+        user = self.request.user
+
+        if user.is_authenticated:
+            queryset = queryset.annotate(
+                is_favorited=Exists(
+                    Favorite.objects.filter(
+                        user=user, recipe=OuterRef('pk')
+                    )
+                ),
+                is_in_shopping_cart=Exists(
+                    ShoppingCart.objects.filter(
+                        user=user, recipe=OuterRef('pk')
+                    )
+                ),
+            )
+        else:
+            queryset = queryset.annotate(
+                is_favorited=Exists(
+                    Favorite.objects.filter(pk__isnull=True)
+                ),
+                is_in_shopping_cart=Exists(
+                    ShoppingCart.objects.filter(pk__isnull=True)
+                ),
+            )
+        return queryset
+
     def get_permissions(self):
         """Возвращает permission classes для actions рецептов."""
-        if self.action in {'add_favorite', 'remove_favorite',
-                           'add_to_cart', 'remove_from_cart',
+        if self.action in {'favorite', 'shopping_cart',
                            'download_shopping_cart'}:
             return (IsAuthenticated(),)
         return super().get_permissions()
@@ -266,7 +288,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         methods=('post',),
         url_path='favorite',
     )
-    def add_favorite(self, request, pk=None):
+    def favorite(self, request, pk=None):
         """Добавляет рецепт в избранное."""
         recipe = self.get_object()
         user = request.user
@@ -282,11 +304,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
-    @action(
-        detail=True,
-        methods=('delete',),
-        url_path='favorite',
-    )
+    @favorite.mapping.delete
     def remove_favorite(self, request, pk=None):
         """Удаляет рецепт из избранного."""
         recipe = self.get_object()
@@ -304,7 +322,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         methods=('post',),
         url_path='shopping_cart',
     )
-    def add_to_cart(self, request, pk=None):
+    def shopping_cart(self, request, pk=None):
         """Добавляет рецепт в список покупок."""
         recipe = self.get_object()
         user = request.user
@@ -320,11 +338,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
-    @action(
-        detail=True,
-        methods=('delete',),
-        url_path='shopping_cart',
-    )
+    @shopping_cart.mapping.delete
     def remove_from_cart(self, request, pk=None):
         """Удаляет рецепт из списка покупок."""
         recipe = self.get_object()
@@ -349,14 +363,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 unit=F('ingredient__measurement_unit'),
             )
             .annotate(total_amount=Sum('amount'))
-            .order_by('ingredient__name')
+            .order_by('name')
         )
 
-        shopping_lines = [
+        shopping_list = 'Список покупок:\n' + ''.join(
             f'{ing["name"]} ({ing["unit"]}) — {ing["total_amount"]}\n'
             for ing in ingredients
-        ]
-        shopping_list = 'Список покупок:\n' + ''.join(shopping_lines)
+        )
 
         response = HttpResponse(
             shopping_list,
