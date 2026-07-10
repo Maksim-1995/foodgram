@@ -259,7 +259,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def validate_tags(self, tags):
         """Проверяет, что теги не повторяются."""
-        tag_ids = [tag.id for tag in tags]
+        tag_ids = tuple(tag.id for tag in tags)
         if len(tag_ids) != len(set(tag_ids)):
             raise serializers.ValidationError(
                 'Теги не должны повторяться.'
@@ -273,7 +273,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 'Нужно добавить хотя бы один ингредиент.'
             )
 
-        ingredient_ids = [item['id'].id for item in ingredients]
+        ingredient_ids = tuple(item['id'].id for item in ingredients)
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError(
                 'Ингредиенты не должны повторяться.'
