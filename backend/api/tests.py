@@ -382,14 +382,6 @@ class UserAPITest(APITestCase):
         response = self.client.post('/api/users/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_user_registration_with_me_username(self):
-        """Проверка регистрации с username 'me'."""
-        self.client.credentials()
-        data = self.user_data.copy()
-        data['username'] = 'me'
-        response = self.client.post('/api/users/', data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
     def test_get_token(self):
         """Проверка получения токена."""
         self.client.credentials()

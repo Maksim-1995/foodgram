@@ -65,7 +65,7 @@ def _create_recipe(
 
 class Command(BaseCommand):
     help = (
-        'Создаёт 7 тестовых пользователей с рецептами '
+        'Создаёт 6 тестовых пользователей с рецептами '
         'и PNG-картинками для демонстрации.'
     )
 
@@ -111,16 +111,8 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS('Ингредиенты загружены.'))
 
-        # 3. Пользователи (7 шт.)
+        # 3. Пользователи (6 шт.)
         users_data = [
-            {
-                'email': 'admin@example.com',
-                'username': 'admin',
-                'first_name': 'Администратор',
-                'last_name': 'Системы',
-                'password': 'admin123',
-                'is_staff': True,
-            },
             {
                 'email': 'user1@example.com',
                 'username': 'user1',
@@ -223,53 +215,6 @@ class Command(BaseCommand):
         )
 
         # 4. Рецепты для каждого пользователя
-        # Рецепты для admin (2 рецепта)
-        admin_recipes = [
-            {
-                'name': 'Блины классические',
-                'text': (
-                    'Классические тонкие блины — отличный вариант для '
-                    'завтрака или ужина. Подавайте со сметаной, вареньем '
-                    'или мёдом.'
-                ),
-                'cooking_time': 30,
-                'tags_slugs': ['breakfast', 'dinner'],
-                'ingredients_data': [
-                    ('Молоко', 500),
-                    ('Яйцо куриное', 3),
-                    ('Мука пшеничная', 250),
-                    ('Сахар', 30),
-                    ('Соль', 1),
-                    ('Масло растительное', 3),
-                ],
-            },
-            {
-                'name': 'Глазунья с луком',
-                'text': (
-                    'Простая и сытная яичница-глазунья с репчатым луком — '
-                    'идеальный завтрак за 10 минут.'
-                ),
-                'cooking_time': 10,
-                'tags_slugs': ['breakfast'],
-                'ingredients_data': [
-                    ('Яйцо куриное', 3),
-                    ('Лук репчатый', 60),
-                    ('Масло растительное', 2),
-                    ('Соль', 1),
-                ],
-            },
-        ]
-        admin_user = users.get('admin')
-        if admin_user is None:
-            self.stdout.write(self.style.ERROR('Пользователь admin не найден'))
-        else:
-            for recipe_index, recipe_data in enumerate(admin_recipes):
-                _create_recipe(
-                    admin_user, recipe_data,
-                    tags, ingredients,
-                    f'admin_recipe_{recipe_index}.png', self,
-                )
-
         # Рецепт для user1 (Иван)
         user1_obj = users.get('user1')
         if user1_obj is not None:
@@ -533,7 +478,6 @@ class Command(BaseCommand):
                 '═══ ЗАГРУЗКА ТЕСТОВЫХ ДАННЫХ ЗАВЕРШЕНА ═══\n'
                 f'Пользователей: {users_count}\n'
                 f'Рецептов в БД: {total_recipes}\n'
-                'Пароль для admin: admin123\n'
                 'Пароль для user1/user2/user3: user12345\n'
                 'Пароль для chef_olga: OlgaPass123\n'
                 'Пароль для chef_dmitry: DimaPass123\n'

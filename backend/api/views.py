@@ -31,7 +31,6 @@ from recipes.models import (
 )
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticated,
@@ -44,6 +43,7 @@ User = get_user_model()
 
 class ReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
     """Базовый ViewSet для read-only эндпоинтов, доступных всем."""
+
     permission_classes = (AllowAny,)
     pagination_class = None
 
@@ -135,18 +135,19 @@ class UserViewSet(
         """Возвращает список подписок текущего пользователя."""
         user = request.user
         queryset = User.objects.filter(subscribers__user=user)
+        context = self.get_serializer_context()
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = UserWithRecipesSerializer(
                 page,
                 many=True,
-                context=self.get_serializer_context(),
+                context=context,
             )
             return self.get_paginated_response(serializer.data)
         serializer = UserWithRecipesSerializer(
             queryset,
             many=True,
-            context=self.get_serializer_context(),
+            context=context,
         )
         return Response(serializer.data)
 
@@ -178,13 +179,14 @@ class UserViewSet(
     def unsubscribe(self, request, pk=None):
         """Отписывает текущего пользователя от автора."""
         author = get_object_or_404(User, pk=pk)
-        user = request.user
-
-        deleted_count, _ = user.subscriptions.filter(
-            author=author,
-        ).delete()
-        if deleted_count == 0:
-            raise ValidationError('Вы не подписаны на этого пользователя.')
+        context = self.get_serializer_context()
+        context['is_delete'] = True
+        serializer = SubscriptionSerializer(
+            data={'author': author.id},
+            context=context,
+        )
+        serializer.is_valid(raise_exception=True)
+        request.user.subscriptions.filter(author=author).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -207,12 +209,6 @@ class IngredientViewSet(ReadOnlyViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """ViewSet для рецептов: CRUD, избранное, корзина, ссылка, скачивание."""
 
-    queryset = Recipe.objects.select_related(
-        'author',
-    ).prefetch_related(
-        'tags',
-        'recipe_ingredients__ingredient',
-    )
     pagination_class = FoodgramPagination
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly)
     filter_backends = (DjangoFilterBackend,)
@@ -225,7 +221,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         делает всего 2 подзапроса через Exists, что даёт огромный
         прирост производительности на списках рецептов.
         """
-        queryset = super().get_queryset()
+        queryset = Recipe.objects.select_related(
+            'author',
+        ).prefetch_related(
+            'tags',
+            'recipe_ingredients__ingredient',
+        )
         user = self.request.user
 
         if user.is_authenticated:
@@ -254,14 +255,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """Возвращает permission classes для actions рецептов."""
-        if self.action in {'favorite', 'shopping_cart',
+        if self.action in {'favorite', 'remove_favorite',
+                           'shopping_cart', 'remove_from_cart',
                            'download_shopping_cart'}:
             return (IsAuthenticated(),)
         return super().get_permissions()
 
     def get_serializer_class(self):
         """Возвращает сериализатор: для чтения или для записи."""
-        if self.request.method == 'GET':
+        if self.action in {'list', 'retrieve'}:
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
@@ -280,7 +282,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Генерирует или возвращает короткую ссылку на рецепт."""
         recipe = self.get_object()
         short_url = request.build_absolute_uri(
-            reverse('recipes:recipe_short_link', args=[recipe.short_code])
+            reverse(
+                'recipes:recipe_short_link',
+                args=(recipe.short_code,),
+            )
         )
         return Response({'short-link': short_url})
 
@@ -309,13 +314,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def remove_favorite(self, request, pk=None):
         """Удаляет рецепт из избранного."""
         recipe = self.get_object()
-        user = request.user
-
-        deleted_count, _ = Favorite.objects.filter(
-            user=user, recipe=recipe
+        context = self.get_serializer_context()
+        context['is_delete'] = True
+        serializer = FavoriteSerializer(
+            data={'recipe': recipe.id},
+            context=context,
+        )
+        serializer.is_valid(raise_exception=True)
+        Favorite.objects.filter(
+            user=request.user, recipe=recipe,
         ).delete()
-        if deleted_count == 0:
-            raise ValidationError('Рецепт не в избранном.')
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -343,13 +351,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def remove_from_cart(self, request, pk=None):
         """Удаляет рецепт из списка покупок."""
         recipe = self.get_object()
-        user = request.user
-
-        deleted_count, _ = ShoppingCart.objects.filter(
-            user=user, recipe=recipe
+        context = self.get_serializer_context()
+        context['is_delete'] = True
+        serializer = ShoppingCartSerializer(
+            data={'recipe': recipe.id},
+            context=context,
+        )
+        serializer.is_valid(raise_exception=True)
+        ShoppingCart.objects.filter(
+            user=request.user, recipe=recipe,
         ).delete()
-        if deleted_count == 0:
-            raise ValidationError('Рецепт не в списке покупок.')
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, url_path='download_shopping_cart')
@@ -367,9 +378,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
             .order_by('name')
         )
 
-        shopping_list = 'Список покупок:\n' + ''.join(
-            f'{ing["name"]} ({ing["unit"]}) — {ing["total_amount"]}\n'
-            for ing in ingredients
+        shopping_list = 'Список покупок:\n{}'.format(
+            ''.join(
+                '{name} ({unit}) — {amount}\n'.format(
+                    name=ing['name'],
+                    unit=ing['unit'],
+                    amount=ing['total_amount'],
+                )
+                for ing in ingredients
+            )
         )
 
         response = HttpResponse(

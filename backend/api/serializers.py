@@ -14,7 +14,6 @@ from recipes.models import (
     Tag,
 )
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 from users.models import Subscription
 
 User = get_user_model()
@@ -44,8 +43,7 @@ class Base64ImageField(serializers.ImageField):
 
             file_uuid = uuid.uuid4()
             file_name = f'{file_uuid}.{file_format}'
-            image_content = ContentFile(decoded_file, name=file_name)
-            return super().to_internal_value(image_content)
+            data = ContentFile(decoded_file, name=file_name)
 
         return super().to_internal_value(data)
 
@@ -102,21 +100,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
             'last_name',
             'password',
         )
-
-    def validate_username(self, value):
-        """
-        Проверяет, что username не равен 'me'.
-
-        Дополнительная бизнес-логика: username 'me' запрещён,
-        так как это имя зарезервировано для служебных целей.
-        Остальные валидаторы (unique, regex) подхватываются
-        автоматически с модели User.
-        """
-        if value.lower() == 'me':
-            raise serializers.ValidationError(
-                'Имя "me" запрещено.'
-            )
-        return value
 
     def validate_password(self, value):
         """Проверяет пароль на соответствие требованиям Django."""
@@ -179,6 +162,7 @@ class RecipeIngredientWriteSerializer(serializers.Serializer):
 
 class BaseRecipeSerializer(serializers.ModelSerializer):
     """Базовый сериализатор рецепта с общим полем image."""
+
     image = serializers.SerializerMethodField()
 
     def get_image(self, obj):
@@ -286,15 +270,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         """Проверяет, что ингредиенты не пустые и не повторяются."""
         if not ingredients:
             raise serializers.ValidationError(
-                'Нужно добавить хотя бы один '
-                'ингредиент.'
+                'Нужно добавить хотя бы один ингредиент.'
             )
 
         ingredient_ids = [item['id'].id for item in ingredients]
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError(
-                'Ингредиенты не должны '
-                'повторяться.'
+                'Ингредиенты не должны повторяться.'
             )
         return ingredients
 
@@ -377,11 +359,30 @@ class BaseRecipeRelationSerializer(serializers.ModelSerializer):
 
     Используется как предок для FavoriteSerializer и ShoppingCartSerializer.
     """
+
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     recipe = serializers.PrimaryKeyRelatedField(queryset=Recipe.objects.all())
+    not_found_message = 'Запись не найдена.'
+    already_exists_message = 'Запись уже существует.'
 
     class Meta:
         fields = ('user', 'recipe')
+
+    def validate(self, attrs):
+        """Проверяет существование/отсутствие связи."""
+        user = self.context['request'].user
+        recipe = attrs['recipe']
+        is_delete = self.context.get('is_delete', False)
+        exists = self.Meta.model.objects.filter(
+            user=user, recipe=recipe,
+        ).exists()
+
+        if is_delete and not exists:
+            raise serializers.ValidationError(self.not_found_message)
+        if not is_delete and exists:
+            raise serializers.ValidationError(self.already_exists_message)
+
+        return attrs
 
     def to_representation(self, instance):
         """Возвращает упрощённые данные рецепта после добавления."""
@@ -392,27 +393,19 @@ class BaseRecipeRelationSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(BaseRecipeRelationSerializer):
+    not_found_message = 'Рецепт не в избранном.'
+    already_exists_message = 'Рецепт уже добавлен в избранное.'
+
     class Meta(BaseRecipeRelationSerializer.Meta):
         model = Favorite
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Favorite.objects.all(),
-                fields=('user', 'recipe'),
-                message='Рецепт уже добавлен в избранное.',
-            ),
-        ]
 
 
 class ShoppingCartSerializer(BaseRecipeRelationSerializer):
+    not_found_message = 'Рецепт не в списке покупок.'
+    already_exists_message = 'Рецепт уже добавлен в список покупок.'
+
     class Meta(BaseRecipeRelationSerializer.Meta):
         model = ShoppingCart
-        validators = [
-            UniqueTogetherValidator(
-                queryset=ShoppingCart.objects.all(),
-                fields=('user', 'recipe'),
-                message='Рецепт уже добавлен в список покупок.',
-            ),
-        ]
 
 
 class SetPasswordSerializer(serializers.Serializer):
@@ -442,27 +435,37 @@ class SetPasswordSerializer(serializers.Serializer):
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
+    """Сериализатор для подписки пользователя на автора."""
+
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     author = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    not_found_message = 'Вы не подписаны на этого пользователя.'
+    already_exists_message = 'Вы уже подписаны на этого пользователя.'
 
     class Meta:
         model = Subscription
         fields = ('user', 'author')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Subscription.objects.all(),
-                fields=('user', 'author'),
-                message='Вы уже подписаны на этого пользователя.',
-            ),
-        ]
 
     def validate(self, attrs):
-        """Проверяет, что подписка не на самого себя."""
-        if attrs['user'] == attrs['author']:
-            raise serializers.ValidationError(
-                'Нельзя подписаться на самого '
-                'себя.'
-            )
+        """Проверяет подписку: не на себя и существует/отсутствует."""
+        user = self.context['request'].user
+        author = attrs['author']
+
+        if not self.context.get('is_delete', False):
+            if user == author:
+                raise serializers.ValidationError(
+                    'Нельзя подписаться на самого себя.'
+                )
+
+        exists = Subscription.objects.filter(
+            user=user, author=author,
+        ).exists()
+
+        if self.context.get('is_delete', False) and not exists:
+            raise serializers.ValidationError(self.not_found_message)
+        if not self.context.get('is_delete', False) and exists:
+            raise serializers.ValidationError(self.already_exists_message)
+
         return attrs
 
     def to_representation(self, instance):
