@@ -15,6 +15,7 @@ from api.serializers import (
     UserSerializer,
     UserWithRecipesSerializer,
 )
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Exists, F, OuterRef, Sum
 from django.http import HttpResponse
@@ -281,12 +282,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_link(self, request, pk=None):
         """Генерирует или возвращает короткую ссылку на рецепт."""
         recipe = self.get_object()
-        short_url = request.build_absolute_uri(
-            reverse(
-                'recipes:recipe_short_link',
-                args=(recipe.short_code,),
-            )
+        short_path = reverse(
+            'recipes:recipe_short_link',
+            args=(recipe.short_code,),
         )
+        if settings.SHORT_LINK_BASE_URL:
+            short_url = f'{settings.SHORT_LINK_BASE_URL}{short_path}'
+        else:
+            short_url = request.build_absolute_uri(short_path)
         return Response({'short-link': short_url})
 
     @action(
