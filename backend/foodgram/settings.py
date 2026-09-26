@@ -131,7 +131,9 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_URLS_REGEX = r'^/api/.*$'
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://158.160.253.0',
+    origin.strip()
+    for origin in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
 ]
 
 USE_X_FORWARDED_HOST = True
