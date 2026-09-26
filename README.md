@@ -5,7 +5,7 @@ Foodgram — это онлайн-платформа для публикации 
 Проект состоит из **REST API** на Django REST Framework и **SPA-фронтенда** на React.
 
 ## Запуск проекта
-http://176.12.75.107/
+ http://maksim-foodgram.duckdns.org
 
 ---
 
@@ -242,8 +242,6 @@ API реализован в строгом соответствии со спе�
 | Логин (email)          | Пароль        | Имя пользователя | Роль         |
 |------------------------|---------------|------------------|--------------|
 | user1@example.com      | user12345     | user1            | Обычный пользователь |
-| user2@example.com      | user12345     | user2            | Обычный пользователь |
-| user3@example.com      | user12345     | user3            | Обычный пользователь |
 | chef_olga@example.com  | OlgaPass123   | chef_olga        | Обычный пользователь |
 | chef_dmitry@example.com| DimaPass123   | chef_dmitry      | Обычный пользователь |
 | elena_cook@example.com | ElenaPass456  | elena_cook       | Обычный пользователь |
