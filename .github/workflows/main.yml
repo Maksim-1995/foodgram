@@ -159,6 +159,8 @@ jobs:
             CSRF_TRUSTED_ORIGINS=http://${{ secrets.DOMAIN }},https://${{ secrets.DOMAIN }}
             DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
             SHORT_LINK_BASE_URL=https://${{ secrets.DOMAIN }}
+            SESSION_COOKIE_SECURE=True
+            CSRF_COOKIE_SECURE=True
             EOF
 
       - name: Copy docker-compose file via scp

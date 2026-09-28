@@ -139,6 +139,13 @@ CSRF_TRUSTED_ORIGINS = [
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+SESSION_COOKIE_SECURE = (
+    os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
+)
+CSRF_COOKIE_SECURE = (
+    os.getenv('CSRF_COOKIE_SECURE', 'False').lower() == 'true'
+)
+
 SHORT_LINK_BASE_URL = os.getenv('SHORT_LINK_BASE_URL', '').rstrip('/')
 
 LOGGING = {

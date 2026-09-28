@@ -5,7 +5,7 @@ Foodgram — это онлайн-платформа для публикации 
 Проект состоит из **REST API** на Django REST Framework и **SPA-фронтенда** на React.
 
 ## Запуск проекта
- http://maksim-foodgram.duckdns.org
+ https://maksim-foodgram.duckdns.org
 
 ---
 
